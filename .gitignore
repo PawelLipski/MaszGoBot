@@ -1,0 +1,7 @@
+
+.cproject
+*.swp
+.project
+.settings/
+Release
+
