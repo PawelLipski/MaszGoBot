@@ -432,16 +432,25 @@ void Run(char nr){
 		break;
 	case 3:
 		printf(">TEST CZUJNIKOW<");
-		Predkosc(180,220);
+		const int lspeed_def = 220, rspeed_def = 180;
+		int lspeed = lspeed_def, rspeed = rspeed_def;
+		Predkosc(lspeed, rspeed);
 		Jedz();
 		CLR(LED1);CLR(LED2);CLR(LED3);CLR(LED4);CLR(LED5);CLR(LED6);CLR(LED7);CLR(LED8);
 		while(running){
+
 			_delay_ms(150);
 			lewo = read_adc(2);
 			srodek = read_adc(3);
 			prawo = read_adc(4);
 			LCD_GoTo(0, 0);
 			printf("%4u  %4u  %4u",lewo,srodek,prawo);
+			if (lewo > srodek)
+				Predkosc(lspeed += 10, rspeed);
+			else if (prawo > srodek)
+				Predkosc(lspeed, rspeed += 10);
+			else
+				Predkosc(lspeed = lspeed_def, rspeed = rspeed_def);
 			if(!GET(BUTTON_L)) running = 0;
 		}
 		SET(LED1);SET(LED2);SET(LED3);SET(LED4);SET(LED5);SET(LED6);SET(LED7);SET(LED8);
