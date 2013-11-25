@@ -445,9 +445,9 @@ void Run(char nr){
 			prawo = read_adc(4);
 			LCD_GoTo(0, 0);
 			printf("%4u  %4u  %4u",lewo,srodek,prawo);
-			if (lewo > srodek)
+			if (lewo > srodek - 20 && lewo > prawo)
 				Predkosc(lspeed += 10, rspeed);
-			else if (prawo > srodek)
+			else if (prawo > srodek - 20 && prawo > lewo)
 				Predkosc(lspeed, rspeed += 10);
 			else
 				Predkosc(lspeed = lspeed_def, rspeed = rspeed_def);
