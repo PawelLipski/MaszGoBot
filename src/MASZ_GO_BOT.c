@@ -416,6 +416,7 @@ void Run(char nr){
 			lewo = read_adc(2);
 			srodek = read_adc(3);
 			prawo = read_adc(4);
+
 			LCD_GoTo(0, 0);
 			printf("%4u  %4u  %4u", lewo, srodek, prawo);
 
@@ -445,6 +446,11 @@ void Run(char nr){
 			prawo = read_adc(4);
 			LCD_GoTo(0, 0);
 			printf("%4u  %4u  %4u",lewo,srodek,prawo);
+
+			LCD_GoTo(0, 1);
+			unsigned int zderz1 = read_adc(6), zderz2 = read_adc(7);
+			printf("%4u  %4u", zderz1, zderz2);
+
 			if (lewo > srodek - 20 && lewo > prawo)
 				Predkosc(lspeed += 10, rspeed);
 			else if (prawo > srodek - 20 && prawo > lewo)
