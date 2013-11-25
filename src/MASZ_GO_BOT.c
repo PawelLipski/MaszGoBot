@@ -448,8 +448,8 @@ void Run(char nr){
 			printf("%4u  %4u  %4u",lewo,srodek,prawo);
 
 			LCD_GoTo(0, 1);
-			unsigned int zderz1 = read_adc(6), zderz2 = read_adc(7);
-			printf("%4u  %4u", zderz1, zderz2);
+			//unsigned int zderz1 = read_adc(6), zderz2 = read_adc(7);
+			printf("%u %u %u %u", GET(INPUT1), GET(INPUT2), GET(INPUT3), GET(INPUT4));
 
 			if (lewo > srodek - 20 && lewo > prawo)
 				Predkosc(lspeed += 10, rspeed);
