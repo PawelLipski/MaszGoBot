@@ -449,7 +449,11 @@ void Run(char nr){
 
 			LCD_GoTo(0, 1);
 			//unsigned int zderz1 = read_adc(6), zderz2 = read_adc(7);
-			printf("%u %u %u %u", GET(INPUT1), GET(INPUT2), GET(INPUT3), GET(INPUT4));
+			printf("%u %u", GET(INPUT1), GET(INPUT2));
+			if (!GET(INPUT1) || !GET(INPUT2)) {
+				Stop();
+				break;
+			}
 
 			if (lewo > srodek - 20 && lewo > prawo)
 				Predkosc(lspeed += 10, rspeed);
