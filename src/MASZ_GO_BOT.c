@@ -351,7 +351,7 @@ void Wypisz_menu(char nr){
 		printf(" <GRA W BERKA> ");
 		break;
 	case 3:
-		printf("<LINEFOLLOWER E>");
+		printf("CZUJNIKI POSCIG");
 		break;
 	case 4:
 		printf("   <HAMSTER>    ");
@@ -431,10 +431,25 @@ void Run(char nr){
 		SET(LED1);SET(LED2);SET(LED3);SET(LED4);SET(LED5);SET(LED6);SET(LED7);SET(LED8);
 		break;
 	case 3:
+		printf(">TEST CZUJNIKOW<");
+		CLR(LED1);CLR(LED2);CLR(LED3);CLR(LED4);CLR(LED5);CLR(LED6);CLR(LED7);CLR(LED8);
+		while(running){
+			_delay_ms(150);
+			lewo = read_adc(2);
+			srodek = read_adc(3);
+			prawo = read_adc(4);
+			LCD_GoTo(0, 0);
+			printf("%4u  %4u  %4u",lewo,srodek,prawo);
+			if(!GET(BUTTON_L)) running = 0;
+		}
+		SET(LED1);SET(LED2);SET(LED3);SET(LED4);SET(LED5);SET(LED6);SET(LED7);SET(LED8);
+		break;
+
+		/*
 		printf(">LINEFOLLOWER E<");
 		CLR(LED3);CLR(LED6);
 		LCD_GoTo(0, 0);
-		printf("Nacisnij START  ");
+		printf("Nacisnij START  ");*/
 
 		// 500,1200,500,2500,300
 		volatile char silnik_a = 150;
@@ -445,7 +460,7 @@ void Run(char nr){
 		volatile int prosta2 = 2500;
 		volatile int obrot3 = 300;
 
-
+		/*
 		sei();
 		while(GET(BUTTON_U) && GET(BUTTON_L)){
 
@@ -536,9 +551,9 @@ void Run(char nr){
 
 		Jedz();
 		LCD_GoTo(0, 0);
-		printf("Nacisnij STOP   ");
+		printf("Nacisnij STOP   ");*/
 		int odleglosc = 0;
-		while(running){
+		/*while(running){
 			odleglosc = read_adc(3);
 			LCD_GoTo(0, 0);
 			printf("odleglosc = %4d",odleglosc);
@@ -552,7 +567,7 @@ void Run(char nr){
 		Stop();
 		Predkosc(0,0);
 		SET(LED1);SET(LED8);
-		SET(LED3);SET(LED6);
+		SET(LED3);SET(LED6);*/
 		break;
 	case 4:
 		printf("  >>HAMSTER<<   ");
