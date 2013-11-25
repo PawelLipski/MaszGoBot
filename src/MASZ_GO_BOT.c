@@ -432,6 +432,8 @@ void Run(char nr){
 		break;
 	case 3:
 		printf(">TEST CZUJNIKOW<");
+		Predkosc(180,220);
+		Jedz();
 		CLR(LED1);CLR(LED2);CLR(LED3);CLR(LED4);CLR(LED5);CLR(LED6);CLR(LED7);CLR(LED8);
 		while(running){
 			_delay_ms(150);
