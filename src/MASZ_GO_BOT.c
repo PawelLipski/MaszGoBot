@@ -408,21 +408,42 @@ void Run(char nr){
 		printf("STOPUJ Pilotem");
 
 		/* inteligente zachowanie dojdzie */
-		//Predkosc(220,180);
-		//Jedz();
-		while(running && William[i][0]) {
-			Beep(William[i][1],(1200/William[i][0])); i++;
+		Predkosc(220,180);
+		Jedz();
+		while(running) {
+			//Beep(William[i][1],(1200/William[i][0]));
 			sei();
+
+			if (William[i][0] == 0)
+				i = 0;
+
+			unsigned int frequency = William[i][1];
+			unsigned int duration = (1200/William[i][0]);
+
+			unsigned int j,t,n;
+			t = F_CPU/(8*frequency);
+			n = (F_CPU/(4*1000))*duration/t;
+
+			for(j=0; j < n * 5 / 4; j++) {
+				FLIP(SPEAKER);
+				_delay_loop_2(t / 7);
+			}
+
+			CLR(SPEAKER);
+
+			i++;
+
 			lewo = read_adc(2);
 			srodek = read_adc(3);
 			prawo = read_adc(4);
 
 			LCD_GoTo(0, 0);
-			printf("%4u  %4u  %4u", lewo, srodek, prawo);
+			printf("%4u  %4u  %4u", lewo, srodek, t);
 
 			if(!GET(BUTTON_L)) running = 0;
 			if(pilot != 0) running = 0;
 			_delay_ms(10);
+
 			cli();
 		}
 
