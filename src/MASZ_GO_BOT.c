@@ -476,7 +476,6 @@ void Run(char nr) {
 		LCD_GoTo(0, 0);
 		printf("STOPUJ Pilotem");
 
-		/* inteligente zachowanie dojdzie */
 		int exit = 0;
 		while (!exit) {
 
@@ -484,7 +483,6 @@ void Run(char nr) {
 			int lspeed = lspeed_def, rspeed = rspeed_def;
 
 			Predkosc(lspeed, rspeed);
-			//Predkosc(220, 180);
 			Jedz();
 
 			unsigned int i = 0;
@@ -493,8 +491,11 @@ void Run(char nr) {
 				sei();
 
 				if (William[i][0] == 0)
-					i = 0;
+					i = 0; // gramy muzyke w kolko
 
+				// kod funkcji Beep przeniesiony tutaj, troche zmieniony,
+				// zeby mimo wlaczonej obslugi przerwan
+				// efekt byl taki sam, jak gdyby nie byla wlaczona
 				unsigned int frequency = William[i][1];
 				unsigned int duration = (1200 / William[i][0]);
 
@@ -502,9 +503,9 @@ void Run(char nr) {
 				t = F_CPU / (8 * frequency);
 				n = (F_CPU / (4 * 1000)) * duration / t;
 
-				for (j = 0; j < n * 5 / 4; j++) {
+				for (j = 0; j < n * 5 / 4; j++) { // 1 zmiana: z n na (n * 5 / 4)
 					FLIP(SPEAKER);
-					_delay_loop_2(t / 7);
+					_delay_loop_2(t / 7); // 2 zmiana: z t na t / 7
 				}
 
 				CLR(SPEAKER);
@@ -520,7 +521,7 @@ void Run(char nr) {
 				LCD_GoTo(0, 1);
 				printf("%4u  %4u  %4u", lewo, srodek, prawo);
 
-				if (!GET(INPUT1) || !GET(INPUT2)) {
+				if (!GET(INPUT1) || !GET(INPUT2)) { // wykrywanie zderzenia
 					running = 0;
 					Stop();
 				} else if (pilot == REMOTE_OK) {
@@ -533,6 +534,7 @@ void Run(char nr) {
 					Stop();
 				} else {
 
+					// wydaje sie, ze wartosc 20 powinno sie zmienic na wieksza
 					if (lewo > srodek - 20 && lewo > prawo)
 						Predkosc(lspeed += 10, rspeed);
 					else if (prawo > srodek - 20 && prawo > lewo)
@@ -559,9 +561,9 @@ void Run(char nr) {
 			}
 			cli();
 
-			if (pilot == REMOTE_LEFT)
+			if (pilot == REMOTE_LEFT) // wyjscie do glownego menu
 				exit = 1;
-			else { // pilot == REMOTE_OK && pilot == REMOTE_RIGHT
+			else { // pilot == REMOTE_OK && pilot == REMOTE_RIGHT - resume
 				pilot = 0;
 				running = 1;
 			}
@@ -577,6 +579,7 @@ void Run(char nr) {
 		SET(LED8);
 		break;
 	case 3:
+		// DEPRECATED
 		printf(">TEST CZUJNIKOW<");
 		const int lspeed_def = 220, rspeed_def = 180;
 		int lspeed = lspeed_def, rspeed = rspeed_def;
