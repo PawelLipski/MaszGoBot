@@ -26,7 +26,7 @@
 
 
 #include "functions.h"
-
+#include "remote.h"
 
 
 void Omin_pudelko_P(char silnik_a, char silnik_b, int obrot1, int prosta1, int obrot2, int prosta2, int obrot3, int prosta3, int obrot4){
@@ -438,18 +438,24 @@ void Run(char nr){
 			prawo = read_adc(4);
 
 			LCD_GoTo(0, 0);
-			printf("%4u  %4u  %4u", lewo, srodek, t);
+			printf("%4u  %4u  %4u", lewo, srodek, prawo);
 
 			if(!GET(BUTTON_L)) running = 0;
-			if(pilot != 0) running = 0;
+			if(pilot == POWER) {
+				running = 0;
+				LCD_GoTo(0, 1);
+				printf("pilot = %4u", pilot);
+
+				Stop();
+				Predkosc(0,0);
+				_delay_ms(1000);
+			}
 			_delay_ms(10);
 
 			cli();
 		}
 
-		Stop();
-		Predkosc(0,0);
-		cli();
+
 		SET(LED1);SET(LED2);SET(LED3);SET(LED4);SET(LED5);SET(LED6);SET(LED7);SET(LED8);
 		break;
 	case 3:
