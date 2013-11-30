@@ -511,6 +511,8 @@ void Run(char nr) {
 				prawo = read_adc(4);
 
 				LCD_GoTo(0, 0);
+				printf("   OK => stop   ");
+				LCD_GoTo(0, 1);
 				printf("%4u  %4u  %4u", lewo, srodek, prawo);
 
 				if (!GET(BUTTON_L))
@@ -527,9 +529,13 @@ void Run(char nr) {
 				cli();
 			}
 
+			LCD_GoTo(0, 0);
+			printf(" OK/R => resume ");
+			LCD_GoTo(0, 1);
+			printf("  Left => exit  ");
+
 			sei();
 			while (pilot != REMOTE_LEFT && pilot != REMOTE_OK && pilot != REMOTE_RIGHT) {
-				//LCD_GoTo(0, 1);
 				//printf("pilot = %4u", pilot);
 				_delay_ms(10);
 			}
