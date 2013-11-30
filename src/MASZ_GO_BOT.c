@@ -25,7 +25,10 @@
  */
 
 #include "functions.h"
-#include "remote.h"
+
+#define REMOTE_LEFT 88
+#define REMOTE_OK 104
+#define REMOTE_RIGHT 216
 
 void Omin_pudelko_P(char silnik_a, char silnik_b, int obrot1, int prosta1,
 		int obrot2, int prosta2, int obrot3, int prosta3, int obrot4) {
@@ -474,7 +477,8 @@ void Run(char nr) {
 		printf("STOPUJ Pilotem");
 
 		/* inteligente zachowanie dojdzie */
-		while (1) {
+		int exit = 0;
+		while (!exit) {
 			unsigned int i = 0;
 
 			Predkosc(220, 180);
@@ -511,11 +515,10 @@ void Run(char nr) {
 
 				if (!GET(BUTTON_L))
 					running = 0;
-				if (pilot == POWER) {
+				if (pilot == REMOTE_OK) {
 					running = 0;
-					LCD_GoTo(0, 1);
-					printf("pilot = %4u", pilot);
 					pilot = 0;
+
 					Stop();
 					Predkosc(0, 0);
 				}
@@ -525,11 +528,19 @@ void Run(char nr) {
 			}
 
 			sei();
-			while (pilot != POWER)
+			while (pilot != REMOTE_LEFT && pilot != REMOTE_OK && pilot != REMOTE_RIGHT) {
+				//LCD_GoTo(0, 1);
+				//printf("pilot = %4u", pilot);
 				_delay_ms(10);
-			pilot = 0;
+			}
 			cli();
-			running = 1;
+
+			if (pilot == REMOTE_LEFT)
+				exit = 1;
+			else { // pilot == REMOTE_OK && pilot == REMOTE_RIGHT
+				pilot = 0;
+				running = 1;
+			}
 		}
 
 		SET(LED1);
