@@ -479,10 +479,15 @@ void Run(char nr) {
 		/* inteligente zachowanie dojdzie */
 		int exit = 0;
 		while (!exit) {
-			unsigned int i = 0;
 
-			Predkosc(220, 180);
+			const int lspeed_def = 220, rspeed_def = 180;
+			int lspeed = lspeed_def, rspeed = rspeed_def;
+
+			Predkosc(lspeed, rspeed);
+			//Predkosc(220, 180);
 			Jedz();
+
+			unsigned int i = 0;
 			while (running) {
 				//Beep(William[i][1],(1200/William[i][0]));
 				sei();
@@ -515,15 +520,27 @@ void Run(char nr) {
 				LCD_GoTo(0, 1);
 				printf("%4u  %4u  %4u", lewo, srodek, prawo);
 
-				if (!GET(BUTTON_L))
+				if (!GET(INPUT1) || !GET(INPUT2)) {
 					running = 0;
-				if (pilot == REMOTE_OK) {
+					Stop();
+				} else if (pilot == REMOTE_OK) {
 					running = 0;
 					pilot = 0;
-
 					Stop();
-					Predkosc(0, 0);
+					//Predkosc(0, 0);
+				} else if (!GET(BUTTON_L)) {
+					running = 0;
+					Stop();
+				} else {
+
+					if (lewo > srodek - 20 && lewo > prawo)
+						Predkosc(lspeed += 10, rspeed);
+					else if (prawo > srodek - 20 && prawo > lewo)
+						Predkosc(lspeed, rspeed += 10);
+					else
+						Predkosc(lspeed = lspeed_def, rspeed = rspeed_def);
 				}
+
 				_delay_ms(10);
 
 				cli();
@@ -535,7 +552,8 @@ void Run(char nr) {
 			printf("  Left => exit  ");
 
 			sei();
-			while (pilot != REMOTE_LEFT && pilot != REMOTE_OK && pilot != REMOTE_RIGHT) {
+			while (pilot != REMOTE_LEFT && pilot != REMOTE_OK
+					&& pilot != REMOTE_RIGHT) {
 				//printf("pilot = %4u", pilot);
 				_delay_ms(10);
 			}
