@@ -8,6 +8,24 @@
 #ifndef _TONE_DEFINITIONS_H
 #define _TONE_DEFINITIONS_H
 
+// _G for Great Octave
+#define TONE_D_G  73
+#define TONE_xD_G 78
+#define TONE_Dx_G 78
+#define TONE_E_G  82
+#define TONE_F_G  87
+#define TONE_xF_G 92
+#define TONE_Fx_G 92
+#define TONE_G_G  98
+#define TONE_xG_G 104
+#define TONE_Gx_G 104
+#define TONE_A_G  110
+#define TONE_xA_G 11
+#define TONE_Ax_G 117
+#define TONE_B_G  123
+#define TONE_C   131
+#define TONE_xC  139
+#define TONE_Cx  139
 #define TONE_D   147
 #define TONE_xD  156
 #define TONE_Dx  156
@@ -98,6 +116,24 @@
 /*** The tone definitions are duplicated to accept both upper and lower case ****/
 /********************************************************************************/
 
+// _g for great octave
+#define TONE_d_g  73
+#define TONE_xd_g 78
+#define TONE_dx_g 78
+#define TONE_e_g  82
+#define TONE_f_g  87
+#define TONE_xf_g 92
+#define TONE_fx_g 92
+#define TONE_g_g  98
+#define TONE_xg_g 104
+#define TONE_gx_g 104
+#define TONE_a_g  110
+#define TONE_xa_g 11
+#define TONE_ax_g 117
+#define TONE_b_g  123
+#define TONE_c   131
+#define TONE_xc  139
+#define TONE_cx  139
 #define TONE_d   147
 #define TONE_xd  156
 #define TONE_dx  156
