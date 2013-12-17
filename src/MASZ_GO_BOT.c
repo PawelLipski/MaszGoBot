@@ -394,6 +394,9 @@ void Run(char nr) {
 		int (*music)[][2] = &King;
 		unsigned int i = 0;
 
+		int targetless_ticks_in_a_row = 0;
+		int ticks_for_radar_left = 0;
+
 		sei();
 		pilot = 0;
 
@@ -502,15 +505,21 @@ void Run(char nr) {
 					/* zachowanie w trakcie zabawy */
 
 					// eksperymentalnie wynik powyzej 90 traktujemy jak potencjalny cel
-					if (lewo < 90 && srodek < 90 && prawo < 90) { // brak targetu, poszukuj
-						lspeed = lspeed_def; rspeed = rspeed_def;
-						// prosty radar w miejscu
-						if (lewo >= (prawo + 40))
-							Lewo(); // lepiej pelne obroty, gdy niczego nie widzi
-						else Prawo();
-						_delay_ms(300);
-						Stop();
+					if (lewo < 90 && srodek < 90 && prawo < 90) {
+						// PRZYPUSZCZALNIE jest to oznaka braku targetu,
+						// musimy sie upewnic - musi sie 10 razy pod rzad tak stac!
+						if (++targetless_ticks_in_a_row == 10) {
+							targetless_ticks_in_a_row = 0;
+							lspeed = lspeed_def; rspeed = rspeed_def;
+							// prosty radar w miejscu
+							if (lewo >= (prawo + 40))
+								Lewo(); // lepiej pelne obroty, gdy niczego nie widzi
+							else Prawo();
+							_delay_ms(300);
+							Stop();
+						}
 					} else {
+						targetless_ticks_in_a_row = 0;
 
 						if (lewo > srodek - 30 && lewo > prawo)
 							Predkosc(lspeed += 15, rspeed);
