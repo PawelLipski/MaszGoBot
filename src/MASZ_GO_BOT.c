@@ -380,14 +380,7 @@ void Run(char nr) {
 	switch (nr) {
 	case 2:
 		printf(">>GRA W BERKA<<");
-		CLR(LED1);
-		CLR(LED2);
-		CLR(LED3);
-		CLR(LED4);
-		CLR(LED5);
-		CLR(LED6);
-		CLR(LED7);
-		CLR(LED8);
+		all_leds_off();
 
 		unsigned int lewo, prawo, srodek;
 		int sound_on = 0;
@@ -412,14 +405,7 @@ void Run(char nr) {
 		&& pilot != REMOTE_RIGHT && pilot != REMOTE_LEFT)
 			;
 		if (!lewo || pilot == REMOTE_LEFT) {
-			SET(LED1);
-			SET(LED2);
-			SET(LED3);
-			SET(LED4);
-			SET(LED5);
-			SET(LED6);
-			SET(LED7);
-			SET(LED8);
+			all_leds_on();
 			break;
 		}
 
@@ -519,7 +505,7 @@ void Run(char nr) {
 					case PURSUIT_target_visible:
 						if (!target_visible) {
 							state = PURSUIT_target_not_visible;
-							invisibility_patience_ticks = 10;
+							invisibility_patience_ticks = 20;
 						} else {
 							log1("Target visible");
 
@@ -541,6 +527,8 @@ void Run(char nr) {
 							if (invisibility_patience_ticks == 0
 									&& radar_interval_ticks == 0) {
 								log0("Radar launched");
+								all_leds_on();
+
 								//Predkosc(0, rspeed_def);
 								lspeed = 0;
 								rspeed = rspeed_def;
@@ -555,11 +543,15 @@ void Run(char nr) {
 
 					case PURSUIT_radar:
 						if (target_visible || --radar_to_do_ticks == 0) {
+
+							log0("Radar finished");
+							all_leds_off();
+							SET(LED_P);
+
 							//Predkosc(lspeed_def, rspeed_def);
 							lspeed = lspeed_def;
 							rspeed = rspeed_def;
 
-							log0("Radar finished");
 							radar_interval_ticks = 120;
 							state = PURSUIT_target_visible;
 						}
