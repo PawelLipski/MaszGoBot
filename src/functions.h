@@ -34,4 +34,8 @@ void input_initialize(void);
 void Beep(unsigned int frequency, unsigned int duration);
 /********************************************************************************/
 
+
+void log0(const char* msg);
+void log1(const char* msg);
+
 #endif

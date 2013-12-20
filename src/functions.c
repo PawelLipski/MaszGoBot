@@ -111,9 +111,9 @@ void initialize(void){
 /********************************************************************************/
 /********************************************************************************/
 /*
-Funkcja generuje sygna³ prostok¹tny na wyprowadzeniu do którego
-przy³¹czony jest  buzzer. Funkcja przyjmuje argumenty:
-czêstotliwoœæ(Hz) sygna³u i du³goœæ czasu trwania sygna³u (ms).
+Funkcja generuje sygnaï¿½ prostokï¿½tny na wyprowadzeniu do ktï¿½rego
+przyï¿½ï¿½czony jest  buzzer. Funkcja przyjmuje argumenty:
+czï¿½stotliwoï¿½ï¿½(Hz) sygnaï¿½u i duï¿½goï¿½ï¿½ czasu trwania sygnaï¿½u (ms).
 */
 void Beep(unsigned int frequency, unsigned int duration){
 
@@ -134,3 +134,15 @@ void Beep(unsigned int frequency, unsigned int duration){
 }
 
 /********************************************************************************/
+
+#include "HD44780.h"
+
+void log0(const char* msg) {
+	LCD_GoTo(0, 0);
+	printf("%s", msg);
+}
+
+void log1(const char* msg) {
+	LCD_GoTo(0, 1);
+	printf("%s", msg);
+}

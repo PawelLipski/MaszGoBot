@@ -429,8 +429,9 @@ void Run(char nr) {
 		int exit = 0;
 		while (!exit) {
 
-			const int lspeed_def = 220, rspeed_def = 180;
+			const int lspeed_def = 230, rspeed_def = 170;
 			int lspeed = lspeed_def, rspeed = rspeed_def;
+			int rest_after_radar = 0;
 
 			while (running) {
 				Predkosc(lspeed, rspeed);
@@ -473,9 +474,17 @@ void Run(char nr) {
 				prawo = read_adc(4);
 
 				LCD_GoTo(0, 0);
-				printf("  GUZIK => stop  ");
-				LCD_GoTo(0, 1);
+				if (rest_after_radar > 0)
+					printf("Rest, %3u left", rest_after_radar);
+				else
+					printf("Just pursuit");
+
+				/*LCD_GoTo(0, 1);
 				printf("%4u  %4u  %4u", lewo, srodek, prawo);
+				_delay_ms(500);*/
+
+				if (rest_after_radar > 0)
+					rest_after_radar--;
 
 				if (!GET(INPUT1) || !GET(INPUT2)) { // wykrywanie zderzenia
 					Cofaj();
@@ -506,27 +515,36 @@ void Run(char nr) {
 
 					// eksperymentalnie wynik powyzej 90 traktujemy jak potencjalny cel
 					if (lewo < 90 && srodek < 90 && prawo < 90) {
-						// PRZYPUSZCZALNIE jest to oznaka braku targetu,
-						// musimy sie upewnic - musi sie 10 razy pod rzad tak stac!
-						if (++targetless_ticks_in_a_row == 10) {
-							targetless_ticks_in_a_row = 0;
+
+						log1("No vsbl target");
+						if (rest_after_radar == 0) {
+
+							log0("Radar launched");
+							// PRZYPUSZCZALNIE jest to oznaka braku targetu,
+							// musimy sie upewnic - musi sie 10 razy pod rzad tak stac!
 							lspeed = lspeed_def; rspeed = rspeed_def;
 							// prosty radar w miejscu
-							if (lewo >= (prawo + 40))
-								Lewo(); // lepiej pelne obroty, gdy niczego nie widzi
-							else Prawo();
-							_delay_ms(300);
-							Stop();
+							//if (lewo >= (prawo + 40))
+							//Lewo(); // lepiej pelne obroty, gdy niczego nie widzi
+							Predkosc(0, rspeed_def);
+							//else Prawo();
+							_delay_ms(1000);
+							Predkosc(lspeed_def, rspeed_def);
+
+							rest_after_radar = 150;
 						}
 					} else {
-						targetless_ticks_in_a_row = 0;
+						log1("Target visible");
+						//targetless_ticks_in_a_row = 0;
 
+						/*
 						if (lewo > srodek - 30 && lewo > prawo)
 							Predkosc(lspeed += 15, rspeed);
 						else if (prawo > srodek - 30 && prawo > lewo)
 							Predkosc(lspeed, rspeed += 15);
 						else
 							Predkosc(lspeed = lspeed_def, rspeed = rspeed_def);
+							*/
 					}
 				}
 
