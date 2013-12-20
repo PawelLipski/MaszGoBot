@@ -394,8 +394,10 @@ void Run(char nr) {
 		int (*music)[][2] = &King;
 		unsigned int i = 0;
 
-		int targetless_ticks_in_a_row = 0;
-		int ticks_for_radar_left = 0;
+		enum {
+			PURSUIT_target_visible, PURSUIT_target_not_visible, PURSUIT_radar
+		};
+		unsigned int state = PURSUIT_target_not_visible;
 
 		sei();
 		pilot = 0;
@@ -406,8 +408,8 @@ void Run(char nr) {
 		LCD_GoTo(0, 1);
 		printf("Pilot: STOP");
 		_delay_ms(500);
-		while (((lewo = GET(BUTTON_L)) == 1) && GET(BUTTON_R)
-				&& pilot != REMOTE_RIGHT && pilot != REMOTE_LEFT)
+		while (((lewo = GET(BUTTON_L)) == 1)&&GET(BUTTON_R)
+		&& pilot != REMOTE_RIGHT && pilot != REMOTE_LEFT)
 			;
 		if (!lewo || pilot == REMOTE_LEFT) {
 			SET(LED1);
@@ -431,7 +433,8 @@ void Run(char nr) {
 
 			const int lspeed_def = 230, rspeed_def = 170;
 			int lspeed = lspeed_def, rspeed = rspeed_def;
-			int rest_after_radar = 0;
+			unsigned radar_interval_ticks = 0, invisibility_patience_ticks = 0,
+					radar_to_do_ticks = 0;
 
 			while (running) {
 				Predkosc(lspeed, rspeed);
@@ -439,10 +442,10 @@ void Run(char nr) {
 
 				sei();
 
-				if(sound_on) {
+				if (sound_on) {
 					if ((*music)[i][0] == 0) {
 						// zmiana utworu
-						if(music == &King)
+						if (music == &King)
 							music = &William;
 						else
 							music = &King;
@@ -473,18 +476,13 @@ void Run(char nr) {
 				srodek = read_adc(3);
 				prawo = read_adc(4);
 
-				LCD_GoTo(0, 0);
-				if (rest_after_radar > 0)
-					printf("Rest, %3u left", rest_after_radar);
-				else
-					printf("Just pursuit");
-
 				/*LCD_GoTo(0, 1);
-				printf("%4u  %4u  %4u", lewo, srodek, prawo);
-				_delay_ms(500);*/
+				 printf("%4u  %4u  %4u", lewo, srodek, prawo);
+				 _delay_ms(500);
+				 continue;*/
 
-				if (rest_after_radar > 0)
-					rest_after_radar--;
+				if (radar_interval_ticks > 0)
+					radar_interval_ticks--;
 
 				if (!GET(INPUT1) || !GET(INPUT2)) { // wykrywanie zderzenia
 					Cofaj();
@@ -513,39 +511,61 @@ void Run(char nr) {
 				} else {
 					/* zachowanie w trakcie zabawy */
 
-					// eksperymentalnie wynik powyzej 90 traktujemy jak potencjalny cel
-					if (lewo < 90 && srodek < 90 && prawo < 90) {
+					int target_visible = !(lewo < 130 && srodek < 130
+							&& prawo < 130);
 
-						log1("No vsbl target");
-						if (rest_after_radar == 0) {
+					switch (state) {
 
-							log0("Radar launched");
-							// PRZYPUSZCZALNIE jest to oznaka braku targetu,
-							// musimy sie upewnic - musi sie 10 razy pod rzad tak stac!
-							lspeed = lspeed_def; rspeed = rspeed_def;
-							// prosty radar w miejscu
-							//if (lewo >= (prawo + 40))
-							//Lewo(); // lepiej pelne obroty, gdy niczego nie widzi
-							Predkosc(0, rspeed_def);
-							//else Prawo();
-							_delay_ms(1000);
-							Predkosc(lspeed_def, rspeed_def);
+					case PURSUIT_target_visible:
+						if (!target_visible) {
+							state = PURSUIT_target_not_visible;
+							invisibility_patience_ticks = 10;
+						} else {
+							log1("Target visible");
 
-							rest_after_radar = 150;
+							if (lewo > srodek - 30 && lewo > prawo)
+								Predkosc(lspeed += 15, rspeed);
+							else if (prawo > srodek - 30 && prawo > lewo)
+								Predkosc(lspeed, rspeed += 15);
+							else
+								Predkosc(lspeed = lspeed_def, rspeed =
+										rspeed_def);
 						}
-					} else {
-						log1("Target visible");
-						//targetless_ticks_in_a_row = 0;
+						break;
 
-						/*
-						if (lewo > srodek - 30 && lewo > prawo)
-							Predkosc(lspeed += 15, rspeed);
-						else if (prawo > srodek - 30 && prawo > lewo)
-							Predkosc(lspeed, rspeed += 15);
-						else
-							Predkosc(lspeed = lspeed_def, rspeed = rspeed_def);
-							*/
+					case PURSUIT_target_not_visible:
+						if (!target_visible) {
+							log1("Target not visible");
+							if (invisibility_patience_ticks > 0)
+								--invisibility_patience_ticks;
+							if (invisibility_patience_ticks == 0
+									&& radar_interval_ticks == 0) {
+								log0("Radar launched");
+								//Predkosc(0, rspeed_def);
+								lspeed = 0;
+								rspeed = rspeed_def;
+
+								state = PURSUIT_radar;
+								radar_to_do_ticks = 100;
+							}
+						} else {
+							state = PURSUIT_target_visible;
+						}
+						break;
+
+					case PURSUIT_radar:
+						if (target_visible || --radar_to_do_ticks == 0) {
+							//Predkosc(lspeed_def, rspeed_def);
+							lspeed = lspeed_def;
+							rspeed = rspeed_def;
+
+							log0("Radar finished");
+							radar_interval_ticks = 120;
+							state = PURSUIT_target_visible;
+						}
+						break;
 					}
+
 				}
 
 				_delay_ms(10);
@@ -559,7 +579,8 @@ void Run(char nr) {
 			printf("  Left => exit  ");
 
 			sei();
-			while (pilot != REMOTE_LEFT && pilot != REMOTE_RIGHT && GET(BUTTON_L) && GET(BUTTON_R)) {
+			while (pilot != REMOTE_LEFT && pilot != REMOTE_RIGHT
+					&& GET(BUTTON_L) && GET(BUTTON_R)) {
 				//printf("pilot = %4u", pilot);
 				_delay_ms(10);
 			}
