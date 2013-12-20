@@ -510,13 +510,16 @@ void Run(char nr) {
 							log1("Target visible");
 							CLR(LED_P);
 
-							if (lewo > srodek - 30 && lewo > prawo)
+							if (lewo > srodek - 30 && lewo > prawo) {
 								Predkosc(lspeed += 15, rspeed);
-							else if (prawo > srodek - 30 && prawo > lewo)
+								left_led_on();
+							} else if (prawo > srodek - 30 && prawo > lewo) {
 								Predkosc(lspeed, rspeed += 15);
-							else
+								right_led_on();
+							} else {
 								Predkosc(lspeed = lspeed_def, rspeed =
 										rspeed_def);
+							}
 						}
 						break;
 
@@ -530,7 +533,7 @@ void Run(char nr) {
 							if (invisibility_patience_ticks == 0
 									&& radar_interval_ticks == 0) {
 								log0("Radar launched");
-								all_leds_on();
+								middle_leds_on();
 
 								//Predkosc(0, rspeed_def);
 								lspeed = 0;
@@ -548,7 +551,7 @@ void Run(char nr) {
 						if (target_visible || --radar_to_do_ticks == 0) {
 
 							log0("Radar finished");
-							all_leds_off();
+							middle_leds_off();
 
 							//Predkosc(lspeed_def, rspeed_def);
 							lspeed = lspeed_def;
@@ -564,6 +567,8 @@ void Run(char nr) {
 
 				_delay_ms(10);
 
+				left_led_off();
+				right_led_off();
 				cli();
 			}
 

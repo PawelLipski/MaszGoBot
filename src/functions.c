@@ -167,3 +167,37 @@ void all_leds_on(void) {
 	CLR(LED7);
 	CLR(LED8);
 }
+
+void middle_leds_off(void) {
+	SET(LED2);
+	SET(LED3);
+	SET(LED4);
+	SET(LED5);
+	SET(LED6);
+	SET(LED7);
+}
+
+void middle_leds_on(void) {
+	CLR(LED2);
+	CLR(LED3);
+	CLR(LED4);
+	CLR(LED5);
+	CLR(LED6);
+	CLR(LED7);
+}
+
+void left_led_on(void) {
+	CLR(LED1);
+}
+
+void left_led_off(void) {
+	SET(LED1);
+}
+
+void right_led_on(void) {
+	CLR(LED8);
+}
+
+void right_led_off(void) {
+	SET(LED8);
+}

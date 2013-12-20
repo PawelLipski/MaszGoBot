@@ -40,5 +40,11 @@ void log1(const char* msg);
 
 void all_leds_on(void);
 void all_leds_off(void);
+void middle_leds_on(void);
+void middle_leds_off(void);
+void left_led_on(void);
+void left_led_off(void);
+void right_led_on(void);
+void right_led_off(void);
 
 #endif
