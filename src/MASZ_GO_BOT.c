@@ -508,6 +508,7 @@ void Run(char nr) {
 							invisibility_patience_ticks = 20;
 						} else {
 							log1("Target visible");
+							CLR(LED_P);
 
 							if (lewo > srodek - 30 && lewo > prawo)
 								Predkosc(lspeed += 15, rspeed);
@@ -522,6 +523,8 @@ void Run(char nr) {
 					case PURSUIT_target_not_visible:
 						if (!target_visible) {
 							log1("Target not visible");
+							SET(LED_P);
+
 							if (invisibility_patience_ticks > 0)
 								--invisibility_patience_ticks;
 							if (invisibility_patience_ticks == 0
@@ -546,7 +549,6 @@ void Run(char nr) {
 
 							log0("Radar finished");
 							all_leds_off();
-							SET(LED_P);
 
 							//Predkosc(lspeed_def, rspeed_def);
 							lspeed = lspeed_def;
