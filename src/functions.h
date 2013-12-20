@@ -46,5 +46,6 @@ void left_led_on(void);
 void left_led_off(void);
 void right_led_on(void);
 void right_led_off(void);
+void leftmost_middle_leds_on(unsigned c);
 
 #endif

@@ -201,3 +201,12 @@ void right_led_on(void) {
 void right_led_off(void) {
 	SET(LED8);
 }
+
+void leftmost_middle_leds_on(unsigned c) {
+	if (c >= 1) CLR(LED2);
+	if (c >= 2) CLR(LED3);
+	if (c >= 3) CLR(LED4);
+	if (c >= 4) CLR(LED5);
+	if (c >= 5) CLR(LED6);
+	//if (c >= 6) CLR(LED7);
+}

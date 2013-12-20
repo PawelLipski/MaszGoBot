@@ -505,7 +505,7 @@ void Run(char nr) {
 					case PURSUIT_target_visible:
 						if (!target_visible) {
 							state = PURSUIT_target_not_visible;
-							invisibility_patience_ticks = 20;
+							invisibility_patience_ticks = 24;
 						} else {
 							log1("Target visible");
 							CLR(LED_P);
@@ -528,22 +528,28 @@ void Run(char nr) {
 							log1("Target not visible");
 							SET(LED_P);
 
-							if (invisibility_patience_ticks > 0)
-								--invisibility_patience_ticks;
-							if (invisibility_patience_ticks == 0
-									&& radar_interval_ticks == 0) {
-								log0("Radar launched");
-								middle_leds_on();
+							if (radar_interval_ticks == 0) {
+								if (invisibility_patience_ticks > 0) {
+									--invisibility_patience_ticks;
+									//unsigned diodes_on = (24 - invisibility_patience_ticks) / 4;
+									//leftmost_middle_leds_on(diodes_on);
+								}
 
-								//Predkosc(0, rspeed_def);
-								lspeed = 0;
-								rspeed = rspeed_def;
+								if (invisibility_patience_ticks == 0) {
+									log0("Radar launched");
+									middle_leds_on();
 
-								state = PURSUIT_radar;
-								radar_to_do_ticks = 100;
+									//Predkosc(0, rspeed_def);
+									lspeed = 0;
+									rspeed = rspeed_def;
+
+									state = PURSUIT_radar;
+									radar_to_do_ticks = 100;
+								}
 							}
 						} else {
 							state = PURSUIT_target_visible;
+							middle_leds_off();
 						}
 						break;
 
