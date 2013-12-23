@@ -410,9 +410,12 @@ void Run(char nr) {
 		}
 
 		pilot = 0;
+		cli();
+
 		LCD_Clear();
 		LCD_GoTo(0, 0);
 		printf("STOPUJ Pilotem");
+
 
 		int exit = 0;
 		while (!exit) {
@@ -463,9 +466,9 @@ void Run(char nr) {
 				prawo = read_adc(4);
 
 				/*LCD_GoTo(0, 1);
-				 printf("%4u  %4u  %4u", lewo, srodek, prawo);
-				 _delay_ms(500);
-				 continue;*/
+				printf("%4u  %4u  %4u", lewo, srodek, prawo);
+				_delay_ms(500);
+				continue;*/
 
 				if (radar_interval_ticks > 0)
 					radar_interval_ticks--;
@@ -495,10 +498,9 @@ void Run(char nr) {
 					running = 0;
 					Stop();
 				} else {
-					/* zachowanie w trakcie zabawy */
 
-					int target_visible = !(lewo < 130 && srodek < 130
-							&& prawo < 130);
+					int target_visible = !(lewo < 170 && srodek < 170
+							&& prawo < 170);
 
 					switch (state) {
 
@@ -568,7 +570,6 @@ void Run(char nr) {
 						}
 						break;
 					}
-
 				}
 
 				_delay_ms(10);
@@ -577,6 +578,8 @@ void Run(char nr) {
 				right_led_off();
 				cli();
 			}
+
+			all_leds_off();
 
 			LCD_GoTo(0, 0);
 			printf(" Right => resume ");
