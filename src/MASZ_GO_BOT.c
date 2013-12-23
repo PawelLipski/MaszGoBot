@@ -418,6 +418,8 @@ void Run(char nr) {
 
 
 		int exit = 0;
+		unsigned remote_disabled_ticks = 0;
+
 		while (!exit) {
 
 			const int lspeed_def = 230, rspeed_def = 170;
@@ -472,6 +474,8 @@ void Run(char nr) {
 
 				if (radar_interval_ticks > 0)
 					radar_interval_ticks--;
+				if (remote_disabled_ticks > 0)
+					remote_disabled_ticks--;
 
 				if (!GET(INPUT1) || !GET(INPUT2)) { // wykrywanie zderzenia
 					Cofaj();
@@ -486,11 +490,15 @@ void Run(char nr) {
 					_delay_ms(50);
 					running = 0;
 					Stop();
-				} else if (pilot == REMOTE_SOUND) {
+				} else if (remote_disabled_ticks == 0 && pilot == REMOTE_SOUND) {
 					sound_on = !sound_on;
+
+					remote_disabled_ticks = 30;
 					pilot = 0;
-				} else if (pilot != 0 && pilot != REMOTE_SOUND) {
+				} else if (remote_disabled_ticks == 0 && pilot != 0 && pilot != REMOTE_SOUND) {
 					running = 0;
+
+					remote_disabled_ticks = 30;
 					pilot = 0;
 					Stop();
 					//Predkosc(0, 0);
