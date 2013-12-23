@@ -515,7 +515,7 @@ void Run(char nr) {
 					case PURSUIT_target_visible:
 						if (!target_visible) {
 							state = PURSUIT_target_not_visible;
-							invisibility_patience_ticks = 24;
+							invisibility_patience_ticks = 100;
 						} else {
 							log1("Target visible");
 							CLR(LED_P);
@@ -573,7 +573,7 @@ void Run(char nr) {
 							lspeed = lspeed_def;
 							rspeed = rspeed_def;
 
-							radar_interval_ticks = 120;
+							radar_interval_ticks = 200;
 							state = PURSUIT_target_visible;
 						}
 						break;
