@@ -376,7 +376,6 @@ void Wypisz_menu(char nr) {
 	}
 }
 
-
 unsigned sensor_left, sensor_right, sensor_middle;
 
 int music_on = 0;
@@ -384,8 +383,16 @@ int (*music_data)[][2] = &King;
 unsigned music_state = 0;
 unsigned music_delay_done = 0;
 
-unsigned int state = PURSUIT_target_not_visible;
+unsigned state;
 unsigned remote_disabled_ticks = 0;
+
+int lspeed, rspeed;
+unsigned radar_interval_ticks = 0;
+unsigned invisibility_patience_ticks = 0;
+unsigned radar_to_do_ticks = 0;
+
+int turn_phase = 0, turn_ticks_to_phase_end = 0;
+
 
 void Run(char nr) {
 	cli();
@@ -405,7 +412,7 @@ void Run(char nr) {
 
 		_delay_ms(500);
 		int left_not_clicked;
-		while (((left_not_clicked = GET(BUTTON_L)) == 1) && GET(BUTTON_R)
+		while (((left_not_clicked = GET(BUTTON_L)) == 1)&&GET(BUTTON_R)
 		&& pilot != REMOTE_RIGHT && pilot != REMOTE_LEFT)
 			continue;
 		if (!left_not_clicked || pilot == REMOTE_LEFT) {
@@ -423,11 +430,10 @@ void Run(char nr) {
 
 		while (!exit) {
 
-			int lspeed = LSPEED_DEF, rspeed = RSPEED_DEF;
-			unsigned radar_interval_ticks = 0, invisibility_patience_ticks = 0,
-					radar_to_do_ticks = 0;
-
-			int turn_phase = 0, turn_ticks_to_phase_end = 0;
+			state = PURSUIT_target_not_visible;
+			radar_interval_ticks = 0;
+			lspeed = LSPEED_DEF;
+			rspeed = RSPEED_DEF;
 
 			while (running) {
 				if (state != ESCAPE_turn) {
@@ -452,7 +458,8 @@ void Run(char nr) {
 					// efekt byl taki sam, jak gdyby nie byla wlaczona
 
 					unsigned int frequency = (*music_data)[music_state][1];
-					unsigned int duration = (1200 / (*music_data)[music_state][0]);
+					unsigned int duration = (1200
+							/ (*music_data)[music_state][0]);
 
 					unsigned int j, t, n;
 					t = F_CPU / (8 * frequency);
@@ -527,8 +534,8 @@ void Run(char nr) {
 					Stop();
 				} else {
 
-					int target_visible = !(sensor_left < 170 && sensor_middle < 170
-							&& sensor_right < 170);
+					int target_visible = !(sensor_left < 170
+							&& sensor_middle < 170 && sensor_right < 170);
 
 					switch (state) {
 
@@ -540,10 +547,12 @@ void Run(char nr) {
 							print1("Target visible");
 							CLR(LED_P);
 
-							if (sensor_left > sensor_middle - 30 && sensor_left > sensor_right) {
+							if (sensor_left > sensor_middle - 30
+									&& sensor_left > sensor_right) {
 								Predkosc(lspeed += 15, rspeed);
 								left_led_on();
-							} else if (sensor_right > sensor_middle - 30 && sensor_right > sensor_left) {
+							} else if (sensor_right > sensor_middle - 30
+									&& sensor_right > sensor_left) {
 								Predkosc(lspeed, rspeed += 15);
 								right_led_on();
 							} else {
@@ -601,7 +610,8 @@ void Run(char nr) {
 					case ESCAPE_turn:
 						LCD_GoTo(0, 0);
 						printf("d %3u l %3u", music_delay_done,
-								40 > music_delay_done ? 40 - music_delay_done : 0);
+								40 > music_delay_done ?
+										40 - music_delay_done : 0);
 
 						if (turn_ticks_to_phase_end == 0) {
 							turn_phase++;
