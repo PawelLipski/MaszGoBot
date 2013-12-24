@@ -393,6 +393,8 @@ unsigned radar_to_do_ticks = 0;
 
 int turn_phase = 0, turn_ticks_to_phase_end = 0;
 
+int target_visible;
+
 void play_note() {
 	if (music_on) {
 		if ((*music_data)[music_state][0] == 0) {
@@ -438,6 +440,42 @@ void update_sensors() {
 
 	/*LCD_GoTo(0, 1);
 	 printf("%4u  %4u  %4u", lewo, srodek, prawo);*/
+}
+
+void handle_bump() {
+	state = ESCAPE_turn;
+	turn_phase = -1;
+	turn_ticks_to_phase_end = 0;
+
+	Predkosc(lspeed = LSPEED_DEF, rspeed = RSPEED_DEF);
+}
+
+void toggle_music() {
+	music_on = !music_on;
+
+	remote_disabled_ticks = REMOTE_DISABLED_TICKS;
+	pilot = 0;
+}
+
+void stop_by_remote() {
+	running = 0;
+
+	remote_disabled_ticks = REMOTE_DISABLED_TICKS;
+	pilot = 0;
+	Stop();
+}
+
+void stop_by_button() {
+	running = 0;
+
+	Stop();
+}
+
+void update_target_visibility() {
+
+	target_visible = !(sensor_left < VISIBILITY_THRESHOLD
+			&& sensor_middle < VISIBILITY_THRESHOLD
+			&& sensor_right < VISIBILITY_THRESHOLD);
 }
 
 void Run(char nr) {
@@ -499,47 +537,17 @@ void Run(char nr) {
 					remote_disabled_ticks--;
 
 				if (state != ESCAPE_turn && (!GET(INPUT1) || !GET(INPUT2))) { // wykrywanie zderzenia
-
-					state = ESCAPE_turn;
-					turn_phase = -1;
-					turn_ticks_to_phase_end = 0;
-
-					Predkosc(lspeed = LSPEED_DEF, rspeed = RSPEED_DEF);
-
-					/*
-					 Cofaj();
-					 _delay_ms(50);
-					 Stop();
-					 _delay_ms(20);
-					 Prawo();
-					 _delay_ms(700);
-					 Stop();
-					 _delay_ms(20);
-					 Jedz();
-					 _delay_ms(50);
-					 running = 0;
-					 Stop();*/
-
+					handle_bump();
 				} else if (remote_disabled_ticks == 0 && pilot == REMOTE_SOUND) {
-					music_on = !music_on;
-
-					remote_disabled_ticks = 30;
-					pilot = 0;
+					toggle_music();
 				} else if (remote_disabled_ticks
-						== 0&& pilot != 0 && pilot != REMOTE_SOUND) {running
-					= 0;
-
-					remote_disabled_ticks = 30;
-					pilot = 0;
-					Stop();
-					//Predkosc(0, 0);
+						== 0&& pilot != 0 && pilot != REMOTE_SOUND) {stop_by_remote
+					();
 				} else if (!GET(BUTTON_L)) {
-					running = 0;
-					Stop();
+					stop_by_button();
 				} else {
 
-					int target_visible = !(sensor_left < 170
-							&& sensor_middle < 170 && sensor_right < 170);
+					update_target_visibility();
 
 					switch (state) {
 
