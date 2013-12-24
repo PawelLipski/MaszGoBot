@@ -558,7 +558,7 @@ void Run(char nr) {
 					case PURSUIT_target_visible:
 						if (!target_visible) {
 							state = PURSUIT_target_not_visible;
-							invisibility_patience_ticks = 100;
+							invisibility_patience_ticks = INVISIBILITY_PATIENCE_TICKS;
 						} else {
 							CLR(LED_P);
 
@@ -594,7 +594,7 @@ void Run(char nr) {
 									rspeed = RSPEED_DEF;
 
 									state = PURSUIT_radar;
-									radar_to_do_ticks = 100;
+									radar_to_do_ticks = RADAR_TO_DO_TICKS;
 								}
 							}
 						} else {
@@ -611,7 +611,7 @@ void Run(char nr) {
 							lspeed = LSPEED_DEF;
 							rspeed = RSPEED_DEF;
 
-							radar_disabled_ticks = 200;
+							radar_disabled_ticks = RADAR_DISABLED_TICKS;
 							state = PURSUIT_target_visible;
 						}
 						break;
@@ -635,7 +635,7 @@ void Run(char nr) {
 
 				}
 
-				if (music_delay_done < 10)
+				if (music_delay_done < 40)
 					_delay_ms(40 - music_delay_done);
 
 				left_led_off();
