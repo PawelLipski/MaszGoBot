@@ -383,7 +383,7 @@ void Run(char nr) {
 		all_leds_off();
 
 		unsigned int lewo, prawo, srodek;
-		int sound_on = 1;
+		int sound_on = 0;
 		int (*music)[][2] = &King;
 		unsigned int i = 0;
 
@@ -425,7 +425,7 @@ void Run(char nr) {
 
 		while (!exit) {
 
-			const int lspeed_def = 230, rspeed_def = 170;
+			const int lspeed_def = 230, rspeed_def = 180;
 			int lspeed = lspeed_def, rspeed = rspeed_def;
 			unsigned radar_interval_ticks = 0, invisibility_patience_ticks = 0,
 					radar_to_do_ticks = 0;
@@ -433,7 +433,7 @@ void Run(char nr) {
 			int turn_phase, turn_ticks_to_phase_end;
 			#define TURN_PHASE_COUNT 5
 			const int turn_in_place_intervals[TURN_PHASE_COUNT] =
-				{ 10, 5, 70, 5, 10 };
+				{ 10, 5, 20, 5, 10 };
 			typedef void (*action)(void);
 			const action turn_in_place_functions[TURN_PHASE_COUNT] =
 				{Cofaj, Stop, Prawo, Stop, Jedz };
@@ -673,6 +673,8 @@ void Run(char nr) {
 		CLR(LED6);
 		CLR(LED7);
 		CLR(LED8);
+		Predkosc(220, 180);
+		Jedz();
 		while (running) {
 			_delay_ms(150);
 			lewo = read_adc(2);
@@ -683,6 +685,7 @@ void Run(char nr) {
 			if (!GET(BUTTON_L))
 				running = 0;
 		}
+		Stop();
 		SET(LED1);
 		SET(LED2);
 		SET(LED3);
