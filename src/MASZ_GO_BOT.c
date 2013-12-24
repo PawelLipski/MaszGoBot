@@ -387,12 +387,58 @@ unsigned state;
 unsigned remote_disabled_ticks = 0;
 
 int lspeed, rspeed;
-unsigned radar_interval_ticks = 0;
+unsigned radar_disabled_ticks = 0;
 unsigned invisibility_patience_ticks = 0;
 unsigned radar_to_do_ticks = 0;
 
 int turn_phase = 0, turn_ticks_to_phase_end = 0;
 
+void play_note() {
+	if (music_on) {
+		if ((*music_data)[music_state][0] == 0) {
+			// zmiana utworu
+			if (music_data == &King)
+				music_data = &William;
+			else
+				music_data = &King;
+			music_state = 0; // gramy muzyke w kolko
+		}
+
+		// kod funkcji Beep przeniesiony tutaj, troche zmieniony,
+		// zeby mimo wlaczonej obslugi przerwan
+		// efekt byl taki sam, jak gdyby nie byla wlaczona
+
+		unsigned int frequency = (*music_data)[music_state][1];
+		unsigned int duration = (1200 / (*music_data)[music_state][0]);
+
+		unsigned int j, t, n;
+		t = F_CPU / (8 * frequency);
+		n = (F_CPU / (4 * 1000)) * duration / t;
+
+		for (j = 0; j < n * 5 / 4; j++) { // 1 zmiana: z n na (n * 5 / 4)
+			FLIP(SPEAKER);
+			_delay_loop_2(t / 7); // 2 zmiana: z t na t / 7
+			// MCU clock freq = 8M
+			// each cycle is 0.125 us
+			// each iteration in _delay_loop_2 takes 3 cycles = 0.375 us
+			// _delay_loop_2(t / 7) takes t * 0.375 / 7 [us]
+		}
+		// n * 5 / 4 * t * 0.375 / 7 =  0.067 * n * t [us]
+		music_delay_done = (unsigned) (0.067 * n * t / 1000);
+
+		CLR(SPEAKER);
+		music_state++;
+	}
+}
+
+void update_sensors() {
+	sensor_left = read_adc(2);
+	sensor_middle = read_adc(3);
+	sensor_right = read_adc(4);
+
+	/*LCD_GoTo(0, 1);
+	 printf("%4u  %4u  %4u", lewo, srodek, prawo);*/
+}
 
 void Run(char nr) {
 	cli();
@@ -431,7 +477,7 @@ void Run(char nr) {
 		while (!exit) {
 
 			state = PURSUIT_target_not_visible;
-			radar_interval_ticks = 0;
+			radar_disabled_ticks = 0;
 			lspeed = LSPEED_DEF;
 			rspeed = RSPEED_DEF;
 
@@ -443,54 +489,12 @@ void Run(char nr) {
 
 				sei();
 
-				if (music_on) {
-					if ((*music_data)[music_state][0] == 0) {
-						// zmiana utworu
-						if (music_data == &King)
-							music_data = &William;
-						else
-							music_data = &King;
-						music_state = 0; // gramy muzyke w kolko
-					}
+				play_note();
 
-					// kod funkcji Beep przeniesiony tutaj, troche zmieniony,
-					// zeby mimo wlaczonej obslugi przerwan
-					// efekt byl taki sam, jak gdyby nie byla wlaczona
+				update_sensors();
 
-					unsigned int frequency = (*music_data)[music_state][1];
-					unsigned int duration = (1200
-							/ (*music_data)[music_state][0]);
-
-					unsigned int j, t, n;
-					t = F_CPU / (8 * frequency);
-					n = (F_CPU / (4 * 1000)) * duration / t;
-
-					for (j = 0; j < n * 5 / 4; j++) { // 1 zmiana: z n na (n * 5 / 4)
-						FLIP(SPEAKER);
-						_delay_loop_2(t / 7); // 2 zmiana: z t na t / 7
-						// MCU clock freq = 8M
-						// each cycle is 0.125 us
-						// each iteration in _delay_loop_2 takes 3 cycles = 0.375 us
-						// _delay_loop_2(t / 7) takes t * 0.375 / 7 [us]
-					}
-					// n * 5 / 4 * t * 0.375 / 7 =  0.067 * n * t [us]
-					music_delay_done = (unsigned) (0.067 * n * t / 1000);
-
-					CLR(SPEAKER);
-					music_state++;
-				}
-
-				sensor_left = read_adc(2);
-				sensor_middle = read_adc(3);
-				sensor_right = read_adc(4);
-
-				/*LCD_GoTo(0, 1);
-				 printf("%4u  %4u  %4u", lewo, srodek, prawo);
-				 _delay_ms(500);
-				 continue;*/
-
-				if (radar_interval_ticks > 0)
-					radar_interval_ticks--;
+				if (radar_disabled_ticks > 0)
+					radar_disabled_ticks--;
 				if (remote_disabled_ticks > 0)
 					remote_disabled_ticks--;
 
@@ -567,7 +571,7 @@ void Run(char nr) {
 							print1("Target not visible");
 							SET(LED_P);
 
-							if (radar_interval_ticks == 0) {
+							if (radar_disabled_ticks == 0) {
 								if (invisibility_patience_ticks > 0) {
 									--invisibility_patience_ticks;
 									//unsigned diodes_on = (24 - invisibility_patience_ticks) / 4;
@@ -602,7 +606,7 @@ void Run(char nr) {
 							lspeed = LSPEED_DEF;
 							rspeed = RSPEED_DEF;
 
-							radar_interval_ticks = 200;
+							radar_disabled_ticks = 200;
 							state = PURSUIT_target_visible;
 						}
 						break;
