@@ -432,7 +432,7 @@ void Run(char nr) {
 
 			int turn_phase, turn_ticks_to_phase_end;
 #define TURN_PHASE_COUNT 5
-			const int turn_in_place_intervals[TURN_PHASE_COUNT] = { 10, 5, 20,
+			const int turn_in_place_intervals[TURN_PHASE_COUNT] = { 10, 5, 8,
 					5, 10 };
 			typedef void (*action)(void);
 			const action turn_in_place_functions[TURN_PHASE_COUNT] = { Cofaj,
@@ -477,7 +477,7 @@ void Run(char nr) {
 						// _delay_loop_2(t / 7) takes t * 0.375 / 7 [us]
 					}
 					// n * 5 / 4 * t * 0.375 / 7 =  0.067 * n * t [us]
-					delay_done = (unsigned)(0.067 * n * t / 1000);
+					delay_done = (unsigned) (0.067 * n * t / 1000);
 
 					CLR(SPEAKER);
 					i++;
@@ -502,6 +502,8 @@ void Run(char nr) {
 					state = ESCAPE_turn;
 					turn_phase = -1;
 					turn_ticks_to_phase_end = 0;
+
+					Predkosc(lspeed = lspeed_def, rspeed = rspeed_def);
 
 					/*
 					 Cofaj();
@@ -608,7 +610,8 @@ void Run(char nr) {
 
 					case ESCAPE_turn:
 						LCD_GoTo(0, 0);
-						printf("d %3u l %3u", delay_done, 40 > delay_done ? 40 - delay_done : 0);
+						printf("d %3u l %3u", delay_done,
+								40 > delay_done ? 40 - delay_done : 0);
 
 						if (turn_ticks_to_phase_end == 0) {
 							turn_phase++;
