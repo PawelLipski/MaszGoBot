@@ -383,12 +383,16 @@ void Run(char nr) {
 		all_leds_off();
 
 		unsigned int lewo, prawo, srodek;
-		int sound_on = 0;
+		int sound_on = 1;
 		int (*music)[][2] = &King;
 		unsigned int i = 0;
 
 		enum {
-			PURSUIT_target_visible, PURSUIT_target_not_visible, PURSUIT_radar
+			PURSUIT_target_visible,
+			PURSUIT_target_not_visible,
+			PURSUIT_radar,
+			ESCAPE_turn,
+			ESCAPE_run_away
 		};
 		unsigned int state = PURSUIT_target_not_visible;
 
@@ -416,7 +420,6 @@ void Run(char nr) {
 		LCD_GoTo(0, 0);
 		printf("STOPUJ Pilotem");
 
-
 		int exit = 0;
 		unsigned remote_disabled_ticks = 0;
 
@@ -427,9 +430,19 @@ void Run(char nr) {
 			unsigned radar_interval_ticks = 0, invisibility_patience_ticks = 0,
 					radar_to_do_ticks = 0;
 
+			int turn_phase, turn_ticks_to_phase_end;
+			#define TURN_PHASE_COUNT 5
+			const int turn_in_place_intervals[TURN_PHASE_COUNT] =
+				{ 10, 5, 70, 5, 10 };
+			typedef void (*action)(void);
+			const action turn_in_place_functions[TURN_PHASE_COUNT] =
+				{Cofaj, Stop, Prawo, Stop, Jedz };
+
 			while (running) {
-				Predkosc(lspeed, rspeed);
-				Jedz();
+				if (state != ESCAPE_turn) {
+					Predkosc(lspeed, rspeed);
+					Jedz();
+				}
 
 				sei();
 
@@ -468,35 +481,43 @@ void Run(char nr) {
 				prawo = read_adc(4);
 
 				/*LCD_GoTo(0, 1);
-				printf("%4u  %4u  %4u", lewo, srodek, prawo);
-				_delay_ms(500);
-				continue;*/
+				 printf("%4u  %4u  %4u", lewo, srodek, prawo);
+				 _delay_ms(500);
+				 continue;*/
 
 				if (radar_interval_ticks > 0)
 					radar_interval_ticks--;
 				if (remote_disabled_ticks > 0)
 					remote_disabled_ticks--;
 
-				if (!GET(INPUT1) || !GET(INPUT2)) { // wykrywanie zderzenia
+				if (state != ESCAPE_turn && (!GET(INPUT1) || !GET(INPUT2))) { // wykrywanie zderzenia
+
+					state = ESCAPE_turn;
+					turn_phase = -1;
+					turn_ticks_to_phase_end = 0;
+
+					/*
 					Cofaj();
 					_delay_ms(50);
 					Stop();
 					_delay_ms(20);
 					Prawo();
-					_delay_ms(700); // ! zamiast tego delay znalezc sposob jak mierzyc zegar
+					_delay_ms(700);
 					Stop();
 					_delay_ms(20);
 					Jedz();
 					_delay_ms(50);
 					running = 0;
-					Stop();
+					Stop();*/
+
 				} else if (remote_disabled_ticks == 0 && pilot == REMOTE_SOUND) {
 					sound_on = !sound_on;
 
 					remote_disabled_ticks = 30;
 					pilot = 0;
-				} else if (remote_disabled_ticks == 0 && pilot != 0 && pilot != REMOTE_SOUND) {
-					running = 0;
+				} else if (remote_disabled_ticks
+						== 0&& pilot != 0 && pilot != REMOTE_SOUND) {running
+					= 0;
 
 					remote_disabled_ticks = 30;
 					pilot = 0;
@@ -577,7 +598,25 @@ void Run(char nr) {
 							state = PURSUIT_target_visible;
 						}
 						break;
+
+					case ESCAPE_turn:
+						LCD_GoTo(0,0);
+						printf("P: %d T: %3d", turn_phase, turn_ticks_to_phase_end);
+
+						if (turn_ticks_to_phase_end == 0) {
+							turn_phase++;
+
+							if (turn_phase == TURN_PHASE_COUNT) {
+								Predkosc(lspeed_def, rspeed_def);
+								state = ESCAPE_run_away;
+							}
+							turn_in_place_functions[turn_phase]();
+							turn_ticks_to_phase_end = turn_in_place_intervals[turn_phase];
+						}
+						--turn_ticks_to_phase_end;
+						break;
 					}
+
 				}
 
 				_delay_ms(10);
