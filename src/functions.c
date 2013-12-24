@@ -136,12 +136,12 @@ void Beep(unsigned int frequency, unsigned int duration) {
 
 #include "HD44780.h"
 
-void log0(const char* msg) {
+void print0(const char* msg) {
 	LCD_GoTo(0, 0);
 	printf("%s", msg);
 }
 
-void log1(const char* msg) {
+void print1(const char* msg) {
 	LCD_GoTo(0, 1);
 	printf("%s", msg);
 }

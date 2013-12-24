@@ -374,18 +374,20 @@ void Wypisz_menu(char nr) {
 		break;
 	}
 }
+
 void Run(char nr) {
 	cli();
 	LCD_GoTo(0, 1);
 	switch (nr) {
 	case 2:
 		printf(">>GRA W BERKA<<");
-		all_leds_off();
 
-		unsigned int lewo, prawo, srodek;
-		int sound_on = 0;
+
+		unsigned sensor_left, sensor_right, sensor_middle;
+
+		int music_on = 0;
 		int (*music)[][2] = &King;
-		unsigned int i = 0;
+		unsigned music_state = 0;
 
 		enum {
 			PURSUIT_target_visible,
@@ -399,16 +401,19 @@ void Run(char nr) {
 		sei();
 		pilot = 0;
 
+
+		all_leds_off();
+
 		LCD_Clear();
-		LCD_GoTo(0, 0);
-		printf("R: START,L: BACK");
-		LCD_GoTo(0, 1);
-		printf("Pilot: STOP");
+		print0("R: START,L: BACK");
+		print1("Pilot: STOP");
+
 		_delay_ms(500);
-		while (((lewo = GET(BUTTON_L)) == 1)&&GET(BUTTON_R)
+		int left_not_clicked;
+		while (((left_not_clicked = GET(BUTTON_L)) == 1) && GET(BUTTON_R)
 		&& pilot != REMOTE_RIGHT && pilot != REMOTE_LEFT)
-			;
-		if (!lewo || pilot == REMOTE_LEFT) {
+			continue;
+		if (!left_not_clicked || pilot == REMOTE_LEFT) {
 			all_leds_on();
 			break;
 		}
@@ -417,8 +422,7 @@ void Run(char nr) {
 		cli();
 
 		LCD_Clear();
-		LCD_GoTo(0, 0);
-		printf("STOPUJ Pilotem");
+		print0("STOPUJ Pilotem");
 
 		int exit = 0;
 		unsigned remote_disabled_ticks = 0;
@@ -447,22 +451,22 @@ void Run(char nr) {
 				sei();
 
 				unsigned delay_done = 0;
-				if (sound_on) {
-					if ((*music)[i][0] == 0) {
+				if (music_on) {
+					if ((*music)[music_state][0] == 0) {
 						// zmiana utworu
 						if (music == &King)
 							music = &William;
 						else
 							music = &King;
-						i = 0; // gramy muzyke w kolko
+						music_state = 0; // gramy muzyke w kolko
 					}
 
 					// kod funkcji Beep przeniesiony tutaj, troche zmieniony,
 					// zeby mimo wlaczonej obslugi przerwan
 					// efekt byl taki sam, jak gdyby nie byla wlaczona
 
-					unsigned int frequency = (*music)[i][1];
-					unsigned int duration = (1200 / (*music)[i][0]);
+					unsigned int frequency = (*music)[music_state][1];
+					unsigned int duration = (1200 / (*music)[music_state][0]);
 
 					unsigned int j, t, n;
 					t = F_CPU / (8 * frequency);
@@ -480,12 +484,12 @@ void Run(char nr) {
 					delay_done = (unsigned) (0.067 * n * t / 1000);
 
 					CLR(SPEAKER);
-					i++;
+					music_state++;
 				}
 
-				lewo = read_adc(2);
-				srodek = read_adc(3);
-				prawo = read_adc(4);
+				sensor_left = read_adc(2);
+				sensor_middle = read_adc(3);
+				sensor_right = read_adc(4);
 
 				/*LCD_GoTo(0, 1);
 				 printf("%4u  %4u  %4u", lewo, srodek, prawo);
@@ -520,7 +524,7 @@ void Run(char nr) {
 					 Stop();*/
 
 				} else if (remote_disabled_ticks == 0 && pilot == REMOTE_SOUND) {
-					sound_on = !sound_on;
+					music_on = !music_on;
 
 					remote_disabled_ticks = 30;
 					pilot = 0;
@@ -537,8 +541,8 @@ void Run(char nr) {
 					Stop();
 				} else {
 
-					int target_visible = !(lewo < 170 && srodek < 170
-							&& prawo < 170);
+					int target_visible = !(sensor_left < 170 && sensor_middle < 170
+							&& sensor_right < 170);
 
 					switch (state) {
 
@@ -547,13 +551,13 @@ void Run(char nr) {
 							state = PURSUIT_target_not_visible;
 							invisibility_patience_ticks = 100;
 						} else {
-							log1("Target visible");
+							print1("Target visible");
 							CLR(LED_P);
 
-							if (lewo > srodek - 30 && lewo > prawo) {
+							if (sensor_left > sensor_middle - 30 && sensor_left > sensor_right) {
 								Predkosc(lspeed += 15, rspeed);
 								left_led_on();
-							} else if (prawo > srodek - 30 && prawo > lewo) {
+							} else if (sensor_right > sensor_middle - 30 && sensor_right > sensor_left) {
 								Predkosc(lspeed, rspeed += 15);
 								right_led_on();
 							} else {
@@ -565,7 +569,7 @@ void Run(char nr) {
 
 					case PURSUIT_target_not_visible:
 						if (!target_visible) {
-							log1("Target not visible");
+							print1("Target not visible");
 							SET(LED_P);
 
 							if (radar_interval_ticks == 0) {
@@ -576,7 +580,7 @@ void Run(char nr) {
 								}
 
 								if (invisibility_patience_ticks == 0) {
-									log0("Radar launched");
+									print0("Radar launched");
 									middle_leds_on();
 
 									//Predkosc(0, rspeed_def);
@@ -596,7 +600,7 @@ void Run(char nr) {
 					case PURSUIT_radar:
 						if (target_visible || --radar_to_do_ticks == 0) {
 
-							log0("Radar finished");
+							print0("Radar finished");
 							middle_leds_off();
 
 							//Predkosc(lspeed_def, rspeed_def);
@@ -662,15 +666,9 @@ void Run(char nr) {
 			}
 		}
 
-		SET(LED1);
-		SET(LED2);
-		SET(LED3);
-		SET(LED4);
-		SET(LED5);
-		SET(LED6);
-		SET(LED7);
-		SET(LED8);
+		all_leds_off();
 		break;
+
 	case 3:
 		printf("   >>MANUAL<<   ");
 		Blink(10);
@@ -689,11 +687,11 @@ void Run(char nr) {
 		Jedz();
 		while (running) {
 			_delay_ms(150);
-			lewo = read_adc(2);
-			srodek = read_adc(3);
-			prawo = read_adc(4);
+			sensor_left = read_adc(2);
+			sensor_middle = read_adc(3);
+			sensor_right = read_adc(4);
 			LCD_GoTo(0, 0);
-			printf("%4u  %4u  %4u", lewo, srodek, prawo);
+			printf("%4u  %4u  %4u", sensor_left, sensor_middle, sensor_right);
 			if (!GET(BUTTON_L))
 				running = 0;
 		}
