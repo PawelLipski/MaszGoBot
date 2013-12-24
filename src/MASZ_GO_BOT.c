@@ -635,8 +635,8 @@ void Run(char nr) {
 
 				}
 
-				if (music_delay_done < 40)
-					_delay_ms(40 - music_delay_done);
+				if (music_delay_done < DELAY_PER_TICK_MS)
+					_delay_ms(DELAY_PER_TICK_MS - music_delay_done);
 
 				left_led_off();
 				right_led_off();
