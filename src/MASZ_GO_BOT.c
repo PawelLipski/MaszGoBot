@@ -431,12 +431,12 @@ void Run(char nr) {
 					radar_to_do_ticks = 0;
 
 			int turn_phase, turn_ticks_to_phase_end;
-			#define TURN_PHASE_COUNT 5
-			const int turn_in_place_intervals[TURN_PHASE_COUNT] =
-				{ 10, 5, 20, 5, 10 };
+#define TURN_PHASE_COUNT 5
+			const int turn_in_place_intervals[TURN_PHASE_COUNT] = { 10, 5, 20,
+					5, 10 };
 			typedef void (*action)(void);
-			const action turn_in_place_functions[TURN_PHASE_COUNT] =
-				{Cofaj, Stop, Prawo, Stop, Jedz };
+			const action turn_in_place_functions[TURN_PHASE_COUNT] = { Cofaj,
+					Stop, Prawo, Stop, Jedz };
 
 			while (running) {
 				if (state != ESCAPE_turn) {
@@ -446,6 +446,7 @@ void Run(char nr) {
 
 				sei();
 
+				unsigned delay_done = 0;
 				if (sound_on) {
 					if ((*music)[i][0] == 0) {
 						// zmiana utworu
@@ -470,7 +471,13 @@ void Run(char nr) {
 					for (j = 0; j < n * 5 / 4; j++) { // 1 zmiana: z n na (n * 5 / 4)
 						FLIP(SPEAKER);
 						_delay_loop_2(t / 7); // 2 zmiana: z t na t / 7
+						// MCU clock freq = 8M
+						// each cycle is 0.125 us
+						// each iteration in _delay_loop_2 takes 3 cycles = 0.375 us
+						// _delay_loop_2(t / 7) takes t * 0.375 / 7 [us]
 					}
+					// n * 5 / 4 * t * 0.375 / 7 =  0.067 * n * t [us]
+					delay_done = (unsigned)(0.067 * n * t / 1000);
 
 					CLR(SPEAKER);
 					i++;
@@ -497,18 +504,18 @@ void Run(char nr) {
 					turn_ticks_to_phase_end = 0;
 
 					/*
-					Cofaj();
-					_delay_ms(50);
-					Stop();
-					_delay_ms(20);
-					Prawo();
-					_delay_ms(700);
-					Stop();
-					_delay_ms(20);
-					Jedz();
-					_delay_ms(50);
-					running = 0;
-					Stop();*/
+					 Cofaj();
+					 _delay_ms(50);
+					 Stop();
+					 _delay_ms(20);
+					 Prawo();
+					 _delay_ms(700);
+					 Stop();
+					 _delay_ms(20);
+					 Jedz();
+					 _delay_ms(50);
+					 running = 0;
+					 Stop();*/
 
 				} else if (remote_disabled_ticks == 0 && pilot == REMOTE_SOUND) {
 					sound_on = !sound_on;
@@ -600,8 +607,8 @@ void Run(char nr) {
 						break;
 
 					case ESCAPE_turn:
-						LCD_GoTo(0,0);
-						printf("P: %d T: %3d", turn_phase, turn_ticks_to_phase_end);
+						LCD_GoTo(0, 0);
+						printf("d %3u l %3u", delay_done, 40 > delay_done ? 40 - delay_done : 0);
 
 						if (turn_ticks_to_phase_end == 0) {
 							turn_phase++;
@@ -611,7 +618,8 @@ void Run(char nr) {
 								state = ESCAPE_run_away;
 							}
 							turn_in_place_functions[turn_phase]();
-							turn_ticks_to_phase_end = turn_in_place_intervals[turn_phase];
+							turn_ticks_to_phase_end =
+									turn_in_place_intervals[turn_phase];
 						}
 						--turn_ticks_to_phase_end;
 						break;
@@ -619,7 +627,8 @@ void Run(char nr) {
 
 				}
 
-				_delay_ms(10);
+				if (delay_done < 10)
+					_delay_ms(40 - delay_done);
 
 				left_led_off();
 				right_led_off();
