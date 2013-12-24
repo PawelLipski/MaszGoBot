@@ -25,6 +25,7 @@
  */
 
 #include "functions.h"
+#include "maszgo_config.h"
 
 #define REMOTE_MENU 130
 #define REMOTE_SOUND 200
@@ -375,6 +376,17 @@ void Wypisz_menu(char nr) {
 	}
 }
 
+
+unsigned sensor_left, sensor_right, sensor_middle;
+
+int music_on = 0;
+int (*music_data)[][2] = &King;
+unsigned music_state = 0;
+unsigned music_delay_done = 0;
+
+unsigned int state = PURSUIT_target_not_visible;
+unsigned remote_disabled_ticks = 0;
+
 void Run(char nr) {
 	cli();
 	LCD_GoTo(0, 1);
@@ -382,25 +394,8 @@ void Run(char nr) {
 	case 2:
 		printf(">>GRA W BERKA<<");
 
-
-		unsigned sensor_left, sensor_right, sensor_middle;
-
-		int music_on = 0;
-		int (*music)[][2] = &King;
-		unsigned music_state = 0;
-
-		enum {
-			PURSUIT_target_visible,
-			PURSUIT_target_not_visible,
-			PURSUIT_radar,
-			ESCAPE_turn,
-			ESCAPE_run_away
-		};
-		unsigned int state = PURSUIT_target_not_visible;
-
 		sei();
 		pilot = 0;
-
 
 		all_leds_off();
 
@@ -425,22 +420,14 @@ void Run(char nr) {
 		print0("STOPUJ Pilotem");
 
 		int exit = 0;
-		unsigned remote_disabled_ticks = 0;
 
 		while (!exit) {
 
-			const int lspeed_def = 230, rspeed_def = 180;
-			int lspeed = lspeed_def, rspeed = rspeed_def;
+			int lspeed = LSPEED_DEF, rspeed = RSPEED_DEF;
 			unsigned radar_interval_ticks = 0, invisibility_patience_ticks = 0,
 					radar_to_do_ticks = 0;
 
-			int turn_phase, turn_ticks_to_phase_end;
-#define TURN_PHASE_COUNT 5
-			const int turn_in_place_intervals[TURN_PHASE_COUNT] = { 10, 5, 8,
-					5, 10 };
-			typedef void (*action)(void);
-			const action turn_in_place_functions[TURN_PHASE_COUNT] = { Cofaj,
-					Stop, Prawo, Stop, Jedz };
+			int turn_phase = 0, turn_ticks_to_phase_end = 0;
 
 			while (running) {
 				if (state != ESCAPE_turn) {
@@ -450,14 +437,13 @@ void Run(char nr) {
 
 				sei();
 
-				unsigned delay_done = 0;
 				if (music_on) {
-					if ((*music)[music_state][0] == 0) {
+					if ((*music_data)[music_state][0] == 0) {
 						// zmiana utworu
-						if (music == &King)
-							music = &William;
+						if (music_data == &King)
+							music_data = &William;
 						else
-							music = &King;
+							music_data = &King;
 						music_state = 0; // gramy muzyke w kolko
 					}
 
@@ -465,8 +451,8 @@ void Run(char nr) {
 					// zeby mimo wlaczonej obslugi przerwan
 					// efekt byl taki sam, jak gdyby nie byla wlaczona
 
-					unsigned int frequency = (*music)[music_state][1];
-					unsigned int duration = (1200 / (*music)[music_state][0]);
+					unsigned int frequency = (*music_data)[music_state][1];
+					unsigned int duration = (1200 / (*music_data)[music_state][0]);
 
 					unsigned int j, t, n;
 					t = F_CPU / (8 * frequency);
@@ -481,7 +467,7 @@ void Run(char nr) {
 						// _delay_loop_2(t / 7) takes t * 0.375 / 7 [us]
 					}
 					// n * 5 / 4 * t * 0.375 / 7 =  0.067 * n * t [us]
-					delay_done = (unsigned) (0.067 * n * t / 1000);
+					music_delay_done = (unsigned) (0.067 * n * t / 1000);
 
 					CLR(SPEAKER);
 					music_state++;
@@ -507,7 +493,7 @@ void Run(char nr) {
 					turn_phase = -1;
 					turn_ticks_to_phase_end = 0;
 
-					Predkosc(lspeed = lspeed_def, rspeed = rspeed_def);
+					Predkosc(lspeed = LSPEED_DEF, rspeed = RSPEED_DEF);
 
 					/*
 					 Cofaj();
@@ -561,8 +547,8 @@ void Run(char nr) {
 								Predkosc(lspeed, rspeed += 15);
 								right_led_on();
 							} else {
-								Predkosc(lspeed = lspeed_def, rspeed =
-										rspeed_def);
+								Predkosc(lspeed = LSPEED_DEF, rspeed =
+										RSPEED_DEF);
 							}
 						}
 						break;
@@ -585,7 +571,7 @@ void Run(char nr) {
 
 									//Predkosc(0, rspeed_def);
 									lspeed = 0;
-									rspeed = rspeed_def;
+									rspeed = RSPEED_DEF;
 
 									state = PURSUIT_radar;
 									radar_to_do_ticks = 100;
@@ -604,8 +590,8 @@ void Run(char nr) {
 							middle_leds_off();
 
 							//Predkosc(lspeed_def, rspeed_def);
-							lspeed = lspeed_def;
-							rspeed = rspeed_def;
+							lspeed = LSPEED_DEF;
+							rspeed = RSPEED_DEF;
 
 							radar_interval_ticks = 200;
 							state = PURSUIT_target_visible;
@@ -614,19 +600,19 @@ void Run(char nr) {
 
 					case ESCAPE_turn:
 						LCD_GoTo(0, 0);
-						printf("d %3u l %3u", delay_done,
-								40 > delay_done ? 40 - delay_done : 0);
+						printf("d %3u l %3u", music_delay_done,
+								40 > music_delay_done ? 40 - music_delay_done : 0);
 
 						if (turn_ticks_to_phase_end == 0) {
 							turn_phase++;
 
 							if (turn_phase == TURN_PHASE_COUNT) {
-								Predkosc(lspeed_def, rspeed_def);
+								Predkosc(LSPEED_DEF, RSPEED_DEF);
 								state = ESCAPE_run_away;
 							}
-							turn_in_place_functions[turn_phase]();
+							turn_in_place_actions[turn_phase]();
 							turn_ticks_to_phase_end =
-									turn_in_place_intervals[turn_phase];
+									turn_in_place_durations[turn_phase];
 						}
 						--turn_ticks_to_phase_end;
 						break;
@@ -634,8 +620,8 @@ void Run(char nr) {
 
 				}
 
-				if (delay_done < 10)
-					_delay_ms(40 - delay_done);
+				if (music_delay_done < 10)
+					_delay_ms(40 - music_delay_done);
 
 				left_led_off();
 				right_led_off();
