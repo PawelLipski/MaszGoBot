@@ -538,13 +538,17 @@ void Run(char nr) {
 
 				if (state != ESCAPE_turn && (!GET(INPUT1) || !GET(INPUT2))) { // wykrywanie zderzenia
 					handle_bump();
+
 				} else if (remote_disabled_ticks == 0 && pilot == REMOTE_SOUND) {
 					toggle_music();
+
 				} else if (remote_disabled_ticks
-						== 0&& pilot != 0 && pilot != REMOTE_SOUND) {stop_by_remote
-					();
+						== 0&& pilot != 0 && pilot != REMOTE_SOUND) {
+					stop_by_remote();
+
 				} else if (!GET(BUTTON_L)) {
 					stop_by_button();
+
 				} else {
 
 					update_target_visibility();
@@ -556,7 +560,6 @@ void Run(char nr) {
 							state = PURSUIT_target_not_visible;
 							invisibility_patience_ticks = 100;
 						} else {
-							print1("Target visible");
 							CLR(LED_P);
 
 							if (sensor_left > sensor_middle - 30
@@ -576,21 +579,17 @@ void Run(char nr) {
 
 					case PURSUIT_target_not_visible:
 						if (!target_visible) {
-							print1("Target not visible");
+
 							SET(LED_P);
 
 							if (radar_disabled_ticks == 0) {
-								if (invisibility_patience_ticks > 0) {
+
+								if (invisibility_patience_ticks > 0)
 									--invisibility_patience_ticks;
-									//unsigned diodes_on = (24 - invisibility_patience_ticks) / 4;
-									//leftmost_middle_leds_on(diodes_on);
-								}
 
 								if (invisibility_patience_ticks == 0) {
-									print0("Radar launched");
 									middle_leds_on();
 
-									//Predkosc(0, rspeed_def);
 									lspeed = 0;
 									rspeed = RSPEED_DEF;
 
@@ -607,10 +606,8 @@ void Run(char nr) {
 					case PURSUIT_radar:
 						if (target_visible || --radar_to_do_ticks == 0) {
 
-							print0("Radar finished");
 							middle_leds_off();
 
-							//Predkosc(lspeed_def, rspeed_def);
 							lspeed = LSPEED_DEF;
 							rspeed = RSPEED_DEF;
 
@@ -620,10 +617,6 @@ void Run(char nr) {
 						break;
 
 					case ESCAPE_turn:
-						LCD_GoTo(0, 0);
-						printf("d %3u l %3u", music_delay_done,
-								40 > music_delay_done ?
-										40 - music_delay_done : 0);
 
 						if (turn_ticks_to_phase_end == 0) {
 							turn_phase++;
@@ -652,10 +645,8 @@ void Run(char nr) {
 
 			all_leds_off();
 
-			LCD_GoTo(0, 0);
-			printf(" Right => resume ");
-			LCD_GoTo(0, 1);
-			printf("  Left => exit  ");
+			print0(" Right => resume ");
+			print1("  Left => exit  ");
 
 			sei();
 			while (pilot != REMOTE_LEFT && pilot != REMOTE_RIGHT
