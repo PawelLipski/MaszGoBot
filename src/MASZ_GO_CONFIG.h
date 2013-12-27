@@ -18,7 +18,7 @@ enum {
 #define RADAR_DISABLED_TICKS 50
 
 #define TURN_PHASE_COUNT 5
-const int turn_in_place_durations[TURN_PHASE_COUNT] = { 10, 5, 6, 5, 10 };
+const int turn_in_place_durations[TURN_PHASE_COUNT] = { 5, 2, 7, 2, 5 };
 typedef void (*action)(void);
 const action turn_in_place_actions[TURN_PHASE_COUNT] = { Cofaj, Stop, Prawo,
 		Stop, Jedz };
