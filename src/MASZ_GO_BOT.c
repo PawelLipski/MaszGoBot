@@ -25,7 +25,7 @@
  */
 
 #include "functions.h"
-#include "maszgo_config.h"
+#include "MASZ_GO_CONFIG.h"
 
 #define REMOTE_MENU 130
 #define REMOTE_SOUND 200
