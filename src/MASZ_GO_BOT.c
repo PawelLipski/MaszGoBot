@@ -34,68 +34,6 @@
 #define REMOTE_RIGHT 216
 #define REMOTE_DOWN 152
 
-void Omin_pudelko_P(char silnik_a, char silnik_b, int obrot1, int prosta1,
-		int obrot2, int prosta2, int obrot3, int prosta3, int obrot4) {
-	Predkosc(silnik_a, silnik_b);
-	Stop();
-	Prawo();
-	_delay_ms(obrot1);
-	Jedz();
-	_delay_ms(prosta1);
-	Lewo();
-	_delay_ms(obrot2);
-	Jedz();
-	_delay_ms(prosta2);
-	Lewo();
-	_delay_ms(obrot3);
-	Jedz();
-	_delay_ms(prosta3);
-	Prawo();
-	_delay_ms(obrot3);
-	Jedz();
-}
-
-void Omin_pudelko_L(char silnik_a, char silnik_b, int obrot1, int prosta1,
-		int obrot2, int prosta2, int obrot3, int prosta3, int obrot4) {
-	Predkosc(silnik_a, silnik_b);
-	Stop();
-	Lewo();
-	_delay_ms(obrot1);
-	Jedz();
-	_delay_ms(prosta1);
-	Prawo();
-	_delay_ms(obrot2);
-	Jedz();
-	_delay_ms(prosta2);
-	Prawo();
-	_delay_ms(obrot3);
-	Jedz();
-	_delay_ms(prosta3);
-	Lewo();
-	_delay_ms(obrot3);
-	Jedz();
-}
-
-void Omin(char silnik_a, char silnik_b, int obrot1, int prosta1, int obrot2,
-		int prosta2, int obrot3) {
-	Predkosc(silnik_a, silnik_b);
-	Stop();
-	Lewo();
-	_delay_ms(obrot1);
-	Jedz();
-	_delay_ms(prosta1);
-	Prawo();
-	_delay_ms(obrot2);
-	Jedz();
-	_delay_ms(prosta2);
-	Prawo();
-	_delay_ms(obrot3);
-	Jedz();
-
-	while (GET(INPUT3) && GET(INPUT4))
-		;
-}
-
 #include "melodie.h"
 
 /********************************************************************************/
@@ -398,11 +336,6 @@ int target_visible;
 void play_note() {
 	if (music_on) {
 		if ((*music_data)[music_state][0] == 0) {
-			// zmiana utworu
-			if (music_data == &King)
-				music_data = &William;
-			else
-				music_data = &King;
 			music_state = 0; // gramy muzyke w kolko
 		}
 
@@ -433,8 +366,13 @@ void play_note() {
 	}
 }
 
+void change_music() {
+	music_state = 0;
+	music_data = &William;
+}
+
 void update_sensors() {
-	sensor_left = read_adc(2);
+	sensor_left = read_adc(2) + LEFT_SIDE_ADJUSTMENT;
 	sensor_middle = read_adc(3);
 	sensor_right = read_adc(4);
 
@@ -448,6 +386,7 @@ void handle_bump() {
 	turn_ticks_to_phase_end = 0;
 
 	Predkosc(lspeed = LSPEED_DEF, rspeed = RSPEED_DEF);
+	change_music();
 }
 
 void toggle_music() {
@@ -514,8 +453,10 @@ void Run(char nr) {
 
 		while (!exit) {
 
-			state = PURSUIT_target_not_visible;
-			radar_disabled_ticks = 0;
+			if(state != ESCAPE_turn || state != ESCAPE_run_away) {
+				state = PURSUIT_target_not_visible;
+				radar_disabled_ticks = 0;
+			}
 			lspeed = LSPEED_DEF;
 			rspeed = RSPEED_DEF;
 
@@ -536,8 +477,17 @@ void Run(char nr) {
 				if (remote_disabled_ticks > 0)
 					remote_disabled_ticks--;
 
-				if (state != ESCAPE_turn && (!GET(INPUT1) || !GET(INPUT2))) { // wykrywanie zderzenia
-					handle_bump();
+				// wykrywanie zderzenia
+				if (!GET(INPUT1) || !GET(INPUT2)) {
+					if(state != ESCAPE_turn || state != ESCAPE_run_away) {
+						handle_bump();
+					} else {
+						Stop();
+						print0(" Dzieki za gre! ");
+						_delay_ms(2000);
+						exit = 1;
+						running = 0;
+					}
 
 				} else if (remote_disabled_ticks == 0 && pilot == REMOTE_SOUND) {
 					toggle_music();
@@ -555,84 +505,100 @@ void Run(char nr) {
 
 					switch (state) {
 
-					case PURSUIT_target_visible:
-						if (!target_visible) {
-							state = PURSUIT_target_not_visible;
-							invisibility_patience_ticks = INVISIBILITY_PATIENCE_TICKS;
-						} else {
-							CLR(LED_P);
-
-							if (sensor_left > sensor_middle - 30
-									&& sensor_left > sensor_right) {
-								Predkosc(lspeed += 15, rspeed);
-								left_led_on();
-							} else if (sensor_right > sensor_middle - 30
-									&& sensor_right > sensor_left) {
-								Predkosc(lspeed, rspeed += 15);
-								right_led_on();
+						case PURSUIT_target_visible:
+							if (!target_visible) {
+								state = PURSUIT_target_not_visible;
+								invisibility_patience_ticks = INVISIBILITY_PATIENCE_TICKS;
 							} else {
-								Predkosc(lspeed = LSPEED_DEF, rspeed =
-										RSPEED_DEF);
-							}
-						}
-						break;
+								CLR(LED_P);
 
-					case PURSUIT_target_not_visible:
-						if (!target_visible) {
-
-							SET(LED_P);
-
-							if (radar_disabled_ticks == 0) {
-
-								if (invisibility_patience_ticks > 0)
-									--invisibility_patience_ticks;
-
-								if (invisibility_patience_ticks == 0) {
-									middle_leds_on();
-
-									lspeed = 0;
-									rspeed = RSPEED_DEF;
-
-									state = PURSUIT_radar;
-									radar_to_do_ticks = RADAR_TO_DO_TICKS;
+								if (sensor_left > sensor_middle - SIDE_DIFFERENCE
+										&& sensor_left > sensor_right) {
+									//Predkosc(lspeed += 15, rspeed);
+									Lewo();
+									left_led_on();
+								} else if (sensor_right > sensor_middle - SIDE_DIFFERENCE
+										&& sensor_right > sensor_left) {
+									//Predkosc(lspeed, rspeed += 15);
+									Prawo();
+									right_led_on();
+								} else {
+									Predkosc(lspeed = LSPEED_DEF, rspeed =
+											RSPEED_DEF);
 								}
 							}
-						} else {
-							state = PURSUIT_target_visible;
-							middle_leds_off();
-						}
-						break;
+							break;
 
-					case PURSUIT_radar:
-						if (target_visible || --radar_to_do_ticks == 0) {
+						case PURSUIT_target_not_visible:
+							if (!target_visible) {
 
-							middle_leds_off();
+								SET(LED_P);
 
-							lspeed = LSPEED_DEF;
-							rspeed = RSPEED_DEF;
+								if (radar_disabled_ticks == 0) {
 
-							radar_disabled_ticks = RADAR_DISABLED_TICKS;
-							state = PURSUIT_target_visible;
-						}
-						break;
+									if (invisibility_patience_ticks > 0)
+										--invisibility_patience_ticks;
 
-					case ESCAPE_turn:
+									if (invisibility_patience_ticks == 0) {
+										middle_leds_on();
 
-						if (turn_ticks_to_phase_end == 0) {
-							turn_phase++;
+										lspeed = 0;
+										rspeed = RSPEED_DEF;
 
-							if (turn_phase == TURN_PHASE_COUNT) {
-								Predkosc(LSPEED_DEF, RSPEED_DEF);
+										state = PURSUIT_radar;
+										radar_to_do_ticks = RADAR_TO_DO_TICKS;
+									}
+								}
+							} else {
+								state = PURSUIT_target_visible;
+								middle_leds_off();
+							}
+							break;
+
+						case PURSUIT_radar:
+							if (target_visible || --radar_to_do_ticks == 0) {
+
+								middle_leds_off();
+
+								lspeed = LSPEED_DEF;
+								rspeed = RSPEED_DEF;
+
+								radar_disabled_ticks = RADAR_DISABLED_TICKS;
+								state = PURSUIT_target_visible;
+							}
+							break;
+
+						case ESCAPE_turn:
+							if ((turn_ticks_to_phase_end == 0) && (turn_phase < TURN_PHASE_COUNT)) {
+								turn_phase++;
+
+								turn_in_place_actions[turn_phase]();
+								turn_ticks_to_phase_end =
+										turn_in_place_durations[turn_phase];
+							} else if (turn_phase == TURN_PHASE_COUNT) {
+							//	print0(" Zmiana! ");
+							//	_delay_ms(5000);
 								state = ESCAPE_run_away;
 							}
-							turn_in_place_actions[turn_phase]();
-							turn_ticks_to_phase_end =
-									turn_in_place_durations[turn_phase];
-						}
-						--turn_ticks_to_phase_end;
-						break;
-					}
+							--turn_ticks_to_phase_end;
+							break;
 
+						case ESCAPE_run_away:
+
+							// flee from target
+							if (target_visible) {
+
+								//warning lights
+								middle_leds_on();
+								SET(LED_P);
+
+
+							} else {
+								CLR(LED_P);
+								middle_leds_off();
+							}
+							break;
+						}
 				}
 
 				if (music_delay_done < DELAY_PER_TICK_MS)
@@ -665,6 +631,8 @@ void Run(char nr) {
 			}
 		}
 
+		//print0(" OUT! ");
+		//_delay_ms(2000);
 		all_leds_off();
 		break;
 
@@ -682,8 +650,9 @@ void Run(char nr) {
 		CLR(LED6);
 		CLR(LED7);
 		CLR(LED8);
-		Predkosc(220, 180);
-		Jedz();
+		sei();
+		///Predkosc(220, 180);
+		//Jedz();
 		while (running) {
 			_delay_ms(150);
 			sensor_left = read_adc(2);
@@ -691,10 +660,11 @@ void Run(char nr) {
 			sensor_right = read_adc(4);
 			LCD_GoTo(0, 0);
 			printf("%4u  %4u  %4u", sensor_left, sensor_middle, sensor_right);
-			if (!GET(BUTTON_L))
+			if (pilot == REMOTE_LEFT || !GET(BUTTON_L))
 				running = 0;
 		}
-		Stop();
+		//Stop();
+		cli();
 		SET(LED1);
 		SET(LED2);
 		SET(LED3);
